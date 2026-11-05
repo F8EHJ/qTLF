@@ -1,0 +1,76 @@
+{
+  "name": "CQ WorldWide DX Contest - CW",
+  "short_name": "CQWW-CW",
+  "description": "CQ WW DX Contest, CW only. Last full weekend of November, Saturday 00:00 UTC to Sunday 23:59:59 UTC (48 h). Select the SATURDAY as contest date.",
+  "url": "https://cqww.com/rules/",
+
+  "schedule": {
+    "periods": [
+      { "day": 0, "start_utc": "00:00", "end_day": 2, "end_utc": "00:00" }
+    ]
+  },
+
+  "modes": ["CW"],
+
+  "bands": [
+    { "name": "160m", "low_khz": 1800,  "high_khz": 2000,  "segment": [1810, 1900],   "cabrillo": "1800" },
+    { "name": "80m",  "low_khz": 3500,  "high_khz": 4000,  "segment": [3500, 3600],   "cabrillo": "3500" },
+    { "name": "40m",  "low_khz": 7000,  "high_khz": 7300,  "segment": [7000, 7060],   "cabrillo": "7000" },
+    { "name": "20m",  "low_khz": 14000, "high_khz": 14350, "segment": [14000, 14100], "cabrillo": "14000" },
+    { "name": "15m",  "low_khz": 21000, "high_khz": 21450, "segment": [21000, 21150], "cabrillo": "21000" },
+    { "name": "10m",  "low_khz": 28000, "high_khz": 29700, "segment": [28000, 28200], "cabrillo": "28000" }
+  ],
+
+  "exchange": {
+    "rst": { "sent": "599", "received": "599" },
+    "sent": {
+      "label": "Zone Sent",
+      "type": "fixed",
+      "prompt": "Your CQ zone (1-40), e.g. 14 for France"
+    },
+    "received": {
+      "label": "Zone Rcvd",
+      "type": "number",
+      "required": true,
+      "pattern": "0?[1-9]|[1-3][0-9]|40",
+      "prefill": "cqz",
+      "completion": false
+    }
+  },
+
+  "dupe": "band",
+
+  "country_file": {
+    "file": "cty.dat",
+    "url": "https://www.country-files.com/cty/cty.dat"
+  },
+
+  "remote_update": "on_open",
+
+  "scoring": "scoring.js",
+
+  "windows": [
+    { "id": "score", "title": "Score", "qml": "windows/Score.qml", "area": "right",  "visible": true },
+    { "id": "rate",  "title": "Rate",  "qml": "windows/Rate.qml",  "area": "bottom", "visible": true },
+    { "id": "zones", "title": "CQ Zones", "qml": "windows/Zones.qml", "area": "right", "visible": true }
+  ],
+
+  "cabrillo": {
+    "contest": "CQ-WW-CW",
+    "fields": [
+      { "tag": "CATEGORY-OPERATOR",    "label": "Operator",    "values": ["SINGLE-OP", "MULTI-OP", "CHECKLOG"], "default": "SINGLE-OP" },
+      { "tag": "CATEGORY-ASSISTED",    "label": "Assisted",    "values": ["NON-ASSISTED", "ASSISTED"], "default": "NON-ASSISTED" },
+      { "tag": "CATEGORY-BAND",        "label": "Band",        "values": ["ALL", "160M", "80M", "40M", "20M", "15M", "10M"], "default": "ALL" },
+      { "tag": "CATEGORY-POWER",       "label": "Power",       "values": ["HIGH", "LOW", "QRP"], "default": "LOW" },
+      { "tag": "CATEGORY-TRANSMITTER", "label": "Transmitter", "values": ["ONE", "TWO", "UNLIMITED"], "default": "ONE" },
+      { "tag": "CATEGORY-STATION",     "label": "Station",     "values": ["FIXED", "PORTABLE", "MOBILE", "EXPEDITION", "DISTRIBUTED"], "default": "FIXED" },
+      { "tag": "CATEGORY-OVERLAY",     "label": "Overlay",     "values": ["", "CLASSIC", "ROOKIE", "YOUTH"], "default": "" },
+      { "tag": "LOCATION",             "label": "Location (US state, else DX)", "default": "DX" },
+      { "tag": "CLUB",                 "label": "Club" },
+      { "tag": "OPERATORS",            "label": "Operators (multi-op)" },
+      { "tag": "SOAPBOX",              "label": "Soapbox (Rookie: licence date, Youth: birth year)" }
+    ],
+    "header": { "CATEGORY-MODE": "CW" },
+    "qso_template": "{freq:>5} {mode:2} {date} {time} {mycall:13} {rst_s:3} {exch_s:6} {call:13} {rst_r:3} {exch_r:6}"
+  }
+}
