@@ -1,0 +1,429 @@
+################################################################################
+#  PROMPT - Generate a contest folder for qTLF
+#
+#  How to use it:
+#   1. Fill in part A below, in English (A-EN) OR in French (A-FR): a few lines are enough.
+#   2. Open Claude, ChatGPT or another AI, attach the official rules of the contest (PDF)
+#      and, if you have them, the CSV files (member list, callsigns...).
+#   3. Paste THIS WHOLE FILE as the message and send it.
+#   4. Save each file of the answer in  rules/<ID>/  (keep the sub-folder windows/), then in
+#      qTLF: Contest > Open / new contest. Ctrl+R reloads scoring.js and the windows.
+#
+#  API version: qTLF 0.9 and later
+################################################################################
+
+
+==============================================================================
+A. MY CONTEST  (fill in ONE of the two versions)
+==============================================================================
+
+---- A-EN (English) -----------------------------------------------------------
+Folder ID (capitals, no space, e.g. REF-CW):
+Rules: see the attached PDF            (or link: ......................)
+Windows I would like (QML), e.g. score per band, missing multipliers,
+information on the station being typed, QSO rate:
+Notes (anything the PDF does not say, CSV file attached, my usual category...):
+
+---- A-FR (Francais) ----------------------------------------------------------
+ID du dossier (majuscules, sans espace, ex. REF-CW) :
+Reglement : voir le PDF joint           (ou lien : ......................)
+Fenetres souhaitees (QML), ex. score par bande, multiplicateurs manquants,
+infos sur la station en cours de saisie, taux de QSO :
+Remarques (ce que le PDF ne dit pas, fichier CSV joint, ma categorie habituelle...) :
+
+
+==============================================================================
+B. YOUR TASK (instructions for the AI)
+==============================================================================
+
+You are an expert in amateur radio contesting and in Qt/QML/JavaScript development.
+Generate a complete contest folder for the qTLF logging software, following EXACTLY the
+API described in part C. Do not invent any key, property or function that is not there.
+
+Read the attached rules (PDF or link) completely: they are the reference for dates,
+bands, modes, exchange, points, multipliers, score and Cabrillo categories. Part A only
+adds the folder ID, the windows wanted and notes.
+
+Language: write your explanations, questions and hypotheses in the language of the part A
+that was filled in (English for A-EN, French for A-FR). Everything that qTLF displays
+(labels, window titles and texts) and all code comments are ALWAYS in English.
+
+Deliverables: the COMPLETE content of each file, each in its own code block preceded by
+its path:
+
+    rules/<ID>/contest.json           required
+    rules/<ID>/scoring.js             required if the contest has a score
+    rules/<ID>/windows/<Name>.qml     one or more windows (at least a Score window), from
+                                      the windows asked in part A
+    rules/<ID>/call_exchange.csv      if the contest needs it: with the data provided,
+                                      otherwise a header + a small fictitious example in comments
+
+Working rules:
+1. If the rules are ambiguous or incomplete on a point that changes the score, ask me
+   BEFORE generating. Otherwise make the most likely assumption and list all your
+   assumptions at the end.
+2. Put in the JSON everything that qTLF checks by itself (bands, modes, periods, exchange
+   format, dupes, minimum time on a band). Do not code these checks again in JavaScript:
+   the script receives q.error already computed.
+3. scoring.js ONLY computes the points, the multipliers, the total and the data shown by
+   the windows.
+4. End with: the list of assumptions, a table of 5 to 10 test QSOs with the expected status
+   and points of each, and the expected score for this test set.
+
+
+==============================================================================
+C. THE qTLF API (complete reference)
+==============================================================================
+
+Architecture: the main program (qTLF) handles the entry line, the CW keyer, the TRX, the
+SQLite log, the generic checks, the data files and the Cabrillo / ADIF export. The contest
+folder only DECLARES (contest.json), COMPUTES the score (scoring.js) and DISPLAYS (QML
+windows).
+
+------------------------------------------------------------------------------
+C.1  contest.json - all the keys
+------------------------------------------------------------------------------
+Strict JSON: no comments, no trailing comma.
+
+{
+  "name": "Long name",                       default: folder name
+  "short_name": "ID",                        default: folder name
+  "description": "Shown in the contest selection dialog (dates, rules summary).",
+  "url": "https://...",                      optional, rules page
+
+  "schedule": {
+    "default_date": { "month": 3, "day": 14 },        optional: date proposed at creation
+    "periods": [                                      one or more periods
+      { "day": 0, "start_utc": "06:00", "end_utc": "09:00" },
+      { "day": 1, "start_utc": "07:00", "end_utc": "10:00" }
+    ]
+  },
+    - day = days after the contest date (0 = the day chosen by the operator).
+    - end_day (optional) = end day, for a period longer than 24 h:
+      Saturday 06:00 -> Sunday 18:00 = { "day": 0, "start_utc": "06:00", "end_day": 1, "end_utc": "18:00" }
+    - "HH:mm" UTC. If end_utc <= start_utc, the period ends the next day
+      ("12:00" -> "12:00" = 24 h). There is NO "duration" key.
+    - Without "periods": no time check.
+
+  "modes": ["CW"],                           default ["CW"]; several -> mode selector.
+                                             Usual values: CW, SSB, RTTY, FM, FT8, FT4, DIGI
+
+  "bands": [                                 REQUIRED, order = display order
+    { "name": "80m", "low_khz": 3500, "high_khz": 3800,
+      "segment": [3510, 3560],               optional: frequency field orange outside the segment (warning only)
+      "cabrillo": "3500" }                   optional: Cabrillo frequency when the QSO has none (default low_khz)
+  ],
+
+  "exchange": {
+    "rst": { "sent": "599", "received": "599" },        defaults
+    "sent": {
+      "label": "Nr Sent",                    title of the field / column
+      "type": "serial",                      "serial" (001, 002... computed) | "fixed" (asked once at creation)
+      "serial_start": 1, "serial_digits": 3, serial only
+      "prompt": "Your department number"     fixed only: help shown at creation
+    },
+    "received": {
+      "label": "Nr Rcvd",
+      "type": "text",                        "text" | "number" (digits only) | "callsign"
+      "required": true,                      empty -> status NO EXCH
+      "pattern": "[0-9]{2}|2A|2B",           optional regex, whole value, case-insensitive
+      "prefill": "call_exchange",            source of the pre-fill, see C.1b
+      "completion": false                    drop-down list on the exchange, see C.1b (default false)
+    }
+  },
+
+  "dupe": "band",                            "band" (default) | "band_mode" | "contest" | "none"
+
+  "band_change": { "min_minutes": 10 },      optional: minimum time on a band, counted from the
+                                             FIRST QSO made on that band. 0 or absent = no rule.
+                                             Each new period frees the choice of band.
+
+  "call_exchange": {                         optional: known stations and their exchange (CSV, see C.2)
+    "file": "call_exchange.csv",             default name to use
+    "fields": ["call", "nr", "name", "type"],      1st column = callsign; other columns free
+    "exchange_field": "nr",                  column = exchange sent by the station (default: 2nd column)
+    "url": "https://raw.githubusercontent.com/.../call_exchange.csv"   optional
+  },
+    Used for: Call drop-down list (call column), exchange drop-down list (exchange_field
+    column), pre-fill of the exchange, and ALL the fields of the line are passed on: q.db in
+    the script, contest.callInfo in the windows.
+    The old name "call_database" is REJECTED by qTLF.
+
+  "country_file": {                          optional: country / continent / zones
+    "file": "cty.dat",
+    "url": "https://www.country-files.com/cty/cty.dat" },     default address to use
+    The ONLY non-CSV file (universal cty.dat format, AD1C). Add it as soon as the score or the
+    pre-fill depends on the country, continent, DXCC or CQ/ITU zones.
+    Do NOT provide cty.dat: qTLF downloads it from "url" (see C.2).
+
+  "remote_update": "on_open",                "on_open" (default: download when the contest opens) | "manual" (Ctrl+U)
+
+  "scoring": "scoring.js",
+
+  "windows": [
+    { "id": "score", "title": "Score", "qml": "windows/Score.qml",
+      "area": "right", "visible": true }    area: "left" | "right" | "top" | "bottom" | "float"
+  ],
+
+  "cabrillo": {
+    "contest": "CONTEST-NAME",               CONTEST: line (default short_name)
+    "fields": [                              chosen by the operator at creation (Configuration > Contest options)
+      { "tag": "CATEGORY-OPERATOR",    "label": "Operator",    "values": ["SINGLE-OP", "MULTI-OP"] },
+      { "tag": "CATEGORY-POWER",       "label": "Power",       "values": ["HIGH", "LOW", "QRP"], "default": "LOW" },
+      { "tag": "CATEGORY-TRANSMITTER", "label": "Transmitter", "values": ["ONE", "TWO", "UNLIMITED"] },
+      { "tag": "CLUB",                 "label": "Club" },              no "values" = free text
+      { "tag": "OPERATORS",            "label": "Operators (multi-op)" }
+    ],
+    "header": { "CATEGORY-MODE": "CW", "CATEGORY-BAND": "ALL" },     fixed lines (take priority)
+    "qso_template": "{freq:>5} {mode:2} {date} {time} {mycall:13} {rst_s:3} {exch_s:6} {call:13} {rst_r:3} {exch_r:6}"
+  }
+}
+
+  qso_template - tokens: {freq} {mode} {date} {time} {mycall} {rst_s} {exch_s} {call}
+  {rst_r} {exch_r} {band}. {x:13} = padded to 13 characters, left-aligned; {x:>5} =
+  right-aligned. The Cabrillo mode is converted automatically (CW->CW, SSB->PH, RTTY->RY,
+  FT8->DG). qTLF writes by itself: START-OF-LOG, CREATED-BY, CONTEST, CALLSIGN, the fields,
+  the header, CLAIMED-SCORE (= total of the script), GRID-LOCATOR, OPERATORS, NAME, ADDRESS,
+  EMAIL, the QSOs, END-OF-LOG. Do NOT put these lines in "header".
+
+  Keys that DO NOT EXIST (old versions, rejected or ignored): format_version,
+  call_database, completion as a file block, period, periods at the top level,
+  duration_minutes, exchange_sent, exchange_received, completion_file, lookup_file, cty_file,
+  remote_files, categories, cabrillo_fields, scoring_script, from, reset_each_period.
+
+------------------------------------------------------------------------------
+C.1b  Drop-down lists and pre-fill (done by qTLF)
+------------------------------------------------------------------------------
+The lists show the lines CONTAINING what is typed, in this order, without duplicates.
+The suffixes /P /M /MM /AM /QRP are ignored to recognise a station.
+
+  Call list               1. callsigns of the contest log   2. call column of call_exchange
+                          (always active)
+  Exchange list           1. exchanges of the contest log   2. exchange_field column of call_exchange
+                          ("completion": true; false by default - useless for numbers)
+  Pre-fill of the         1. last QSO with this station in the contest log
+  exchange (TAB/ENTER     2. according to "prefill":
+  from Call)                 "call_exchange"  exchange_field column of call_exchange
+                             "cqz" | "ituz" | "cont" | "dxcc" | "country"   that field of cty.dat
+                             "none"           no pre-fill, not even from the log
+                          Default: "call_exchange" if the file exists, otherwise "none".
+
+  Choice according to the exchange:
+    member number, fixed department, SK callsign...  -> "prefill": "call_exchange"
+    CQ zone (CQ WW...)                                -> "prefill": "cqz"   + country_file
+    ITU zone (IARU HF...)                             -> "prefill": "ituz"  + country_file
+    continent                                         -> "prefill": "cont"  + country_file
+    serial number, value that changes at each QSO     -> "prefill": "none"
+
+------------------------------------------------------------------------------
+C.2  Data files
+------------------------------------------------------------------------------
+- All CSV, except cty.dat. One record per line.
+- Separator ";" by default ("separator": "," possible in the block).
+- Encoding "auto" (UTF-8, otherwise Excel's Windows-1252); "encoding": "utf-8" | "windows-1252" | "latin1".
+- Empty lines and lines starting with # are ignored; spaces around values are removed.
+- A 1st line equal to the names of "fields" (e.g. call;nr;name;type) is a header, ignored.
+- "file" = plain file name in the folder (no "/", no ".."). "url" = http(s) only, and the RAW
+  address for GitHub (raw.githubusercontent.com/...).
+- Default CSV file: call_exchange.csv. Example:
+      # call_exchange: station ; member number ; first name
+      call;nr;name
+      F6ABC;1404;Pierre
+- Download ("url"): when the contest opens ("remote_update": "on_open", default) or with
+  Ctrl+U ("manual"). Without network, the local copy is kept. If cty.dat could NEVER be
+  downloaded, there is no country data: contest.ctyLoaded = false, q.cont / q.cqz... absent,
+  cty pre-fill empty. The script and the windows MUST handle it (see C.4, C.5).
+
+------------------------------------------------------------------------------
+C.3  Generic checks done by qTLF (BEFORE the script)
+------------------------------------------------------------------------------
+Each QSO gets at most one error, in this order of priority, shown in the Status column and
+passed to the script in q.error ("" = valid QSO):
+
+  BAND NOT ALLOWED   band not in "bands"
+  MODE NOT ALLOWED   mode not in "modes"
+  OUT OF PERIOD      outside all the "periods"
+  BAND CHANGE        band changed before band_change.min_minutes
+  BAD CALL           invalid callsign
+  NO EXCH            empty exchange while "required": true
+  BAD EXCH           exchange not matching "type" or "pattern"
+  DUPE               already worked according to "dupe" (only valid QSOs count as 1st contact).
+                     The suffixes /P /M /MM /AM /QRP are ignored: F5ABC = F5ABC/P = F5ABC/MM.
+                     Prefixes are kept: EA8/F5ABC is another station.
+
+------------------------------------------------------------------------------
+C.4  scoring.js
+------------------------------------------------------------------------------
+qTLF calls  function score(qsos, contest)  after each change of the log.
+Engine: QJSEngine (ECMAScript; use var/function to keep it simple). Sandbox: no network,
+no files, no require/import. Must be fast (run again at each QSO).
+console.log() writes to the terminal.
+
+INPUT qsos: array sorted by time, each q:
+  q.id            identifier (key for "status")
+  q.datetime      "2026-11-07T05:30:00Z"   q.date "2026-11-07"   q.time "05:30:00"
+  q.band "80m"    q.freq 3525 (kHz, 0 if unknown)    q.mode "CW"
+  q.call          (FULL callsign as typed, e.g. "F5ABC/P")
+  q.rst_s  q.rst_r  q.exch_s  q.exch_r  q.tagged (bool)  q.comment
+  q.error         "" if valid, otherwise the text of C.3
+  q.cont q.country q.dxcc q.cqz q.ituz      (if cty.dat is loaded; otherwise ABSENT -> use q.cont || "")
+  q.db            ALL the fields of the call_exchange line {call, nr, name, ...} ({} if unknown;
+                  F5ABC/P finds the line of F5ABC)
+
+INPUT contest:
+  id, name, rules, rulesName, shortName, date "2026-11-07", mycall, category, exch_sent,
+  start, end                       ISO UTC (start of the 1st period, end of the last one)
+  periods  [{start, end}]          ISO UTC, end excluded
+  fields   {"CATEGORY-POWER": "LOW", "CLUB": "...", ...}   Cabrillo values chosen
+  my       {valid, cont, country, prefix, cqz, ituz}     my station in cty.dat (valid false without cty.dat)
+  ctyLoaded (bool), bands ["80m", ...], modes ["CW"], band_change {min_minutes}
+
+  Without cty.dat (ctyLoaded false) the script must still return a score: apply a documented
+  default rule (e.g. "unknown continent = same continent") and count it (e.g. unknownCont)
+  so that a window can warn the operator.
+
+HELPERS (global object qtlf):
+  qtlf.isCallsign(s)          true if s looks like a callsign
+  qtlf.stationCall(call)      without /P /M /MM /AM /QRP (F5ABC/P -> F5ABC) - same rule as qTLF's dupes
+  qtlf.baseCall(call)         longest part, prefix removed too (EA8/F5ABC/P -> F5ABC)
+  qtlf.perBand(contest, init) { "80m": init("80m"), ... } for each band of the contest
+  qtlf.count(obj)             number of keys of an object (e.g. set of multipliers)
+
+OUTPUT (returned object) - keys read by qTLF:
+  total         final score -> status bar "Score:" and CLAIMED-SCORE of the Cabrillo
+  points        \  status bar "P pts x M mults"
+  multipliers   /
+  summary       free text that replaces this summary in the status bar (optional)
+  status        { <q.id>: "TEXT" } contest-specific status for valid QSOs
+                (generic errors keep priority; anything but "OK" is red)
+  + any other free key, read by the windows through contest.score.<key>
+    (e.g. bands: [{band, qsos, points, mults, multList}], missing: [...], ...)
+
+Template:
+  function score(qsos, contest) {
+      var bands = qtlf.perBand(contest, function (b) {
+          return { band: b, qsos: 0, points: 0, mults: {} };
+      });
+      var points = 0;
+      qsos.forEach(function (q) {
+          var b = bands[q.band];
+          if (!b) return;
+          b.qsos++;
+          if (q.error) return;                 // already checked by qTLF
+          var pts = 1;                          // <- contest rule
+          b.points += pts; points += pts;
+          b.mults[q.exch_r.toUpperCase()] = true;   // <- contest rule
+      });
+      var list = [], mults = 0;
+      contest.bands.forEach(function (name) {
+          var b = bands[name], n = qtlf.count(b.mults);
+          mults += n;
+          list.push({ band: name, qsos: b.qsos, points: b.points, mults: n,
+                      multList: Object.keys(b.mults).sort() });
+      });
+      return { points: points, multipliers: mults, total: points * mults, bands: list };
+  }
+
+------------------------------------------------------------------------------
+C.5  QML windows
+------------------------------------------------------------------------------
+Each window is a dock (Windows menu). Qt 6: use ONLY
+    import QtQuick
+    import QtQuick.Layouts
+(NO QtQuick.Controls, NO QtQuick.Dialogs, NO images or external files, no version number
+after the imports.)
+
+Global object available: contest
+  contest.score          object returned by score()           (may be {} at the start)
+  contest.info           the contest object passed to score()
+  contest.qsos           all the QSOs (fields of C.4 + status)
+  contest.bandCounts     [{band, qsos}]
+  contest.qsoCount       number of QSOs
+  contest.currentBand    band chosen on the entry line
+  contest.entryCall      callsign being typed ("" if empty)
+  contest.callInfo       { call, known (present in call_exchange), <ALL the fields of the line>,
+                           cty: {valid, cont, country, prefix, cqz, ituz},
+                           workedBands: [...], dupe: bool }
+  contest.myCty          {valid, cont, country, prefix, cqz, ituz}
+  contest.ctyLoaded      bool - false if cty.dat is missing: show a warning
+                         (e.g. "cty.dat not loaded - Contest > Update data files (Ctrl+U)")
+  signals: updated() (after each computation), currentBandChanged(), entryChanged()
+
+Layout rules:
+- Root: Rectangle { color: pal.window ; implicitWidth ~260-340 ; implicitHeight }
+  with  SystemPalette { id: pal; colorGroup: SystemPalette.Active }  and the colours
+  pal.window, pal.windowText, pal.highlight, pal.mid (light / dark theme respected).
+- The dock may be narrow (180 px minimum): ColumnLayout / GridLayout, Layout.fillWidth,
+  elide / wrapMode, no wide fixed widths.
+- Always guard against missing values: (contest.score.bands || []),
+  contest.callInfo || ({}), !!x for booleans, x || 0 for numbers.
+- Simple bindings (text: contest.score.total || 0); for a heavier computation:
+  Connections { target: contest; function onUpdated() { ... } }.
+- "monospace" font for columns of figures; text in English.
+
+Minimal (working) template:
+  import QtQuick
+  import QtQuick.Layouts
+
+  Rectangle {
+      id: root
+      color: pal.window
+      implicitWidth: 300
+      implicitHeight: 220
+      SystemPalette { id: pal; colorGroup: SystemPalette.Active }
+      readonly property var s: contest.score || ({})
+
+      ColumnLayout {
+          anchors.fill: parent; anchors.margins: 10; spacing: 4
+          RowLayout {
+              Layout.fillWidth: true
+              Text { text: "Band"; color: pal.windowText; font.bold: true; Layout.fillWidth: true }
+              Text { text: "QSOs"; color: pal.windowText; font.bold: true; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+              Text { text: "Pts";  color: pal.windowText; font.bold: true; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+              Text { text: "Mult"; color: pal.windowText; font.bold: true; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+          }
+          Repeater {
+              model: root.s.bands || []
+              delegate: RowLayout {
+                  required property var modelData
+                  Layout.fillWidth: true
+                  opacity: modelData.qsos > 0 ? 1 : 0.4
+                  Text { text: modelData.band; color: pal.windowText; font.family: "monospace"; Layout.fillWidth: true }
+                  Text { text: modelData.qsos;   color: pal.windowText; font.family: "monospace"; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+                  Text { text: modelData.points; color: pal.windowText; font.family: "monospace"; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+                  Text { text: modelData.mults;  color: pal.windowText; font.family: "monospace"; Layout.preferredWidth: 50; horizontalAlignment: Text.AlignRight }
+              }
+          }
+          Rectangle { Layout.fillWidth: true; height: 1; color: pal.mid }
+          Text { text: "Final score"; color: pal.windowText }
+          Text { text: root.s.total || 0; color: pal.highlight; font.pixelSize: 28; font.bold: true }
+          Text { text: (root.s.points || 0) + " points x " + (root.s.multipliers || 0) + " multipliers"
+                 color: pal.windowText; opacity: 0.7 }
+          Item { Layout.fillHeight: true }
+      }
+  }
+
+  Useful windows depending on the contest: Score (table per band + total), Multipliers
+  (multipliers worked / missing per band), Station (information on contest.entryCall:
+  name, member number, country, points the QSO would give, dupe, bands already worked), Rate.
+
+
+==============================================================================
+D. CHECK BEFORE ANSWERING
+==============================================================================
+[ ] contest.json is valid JSON, no key outside C.1 (no format_version, no call_database).
+[ ] Periods use start_utc / end_utc; "day" correct for contests over 2 days, end_day for
+    periods longer than 24 h.
+[ ] The exchange format checks are in "received" (type / pattern / required), not in the
+    script.
+[ ] scoring.js defines function score(qsos, contest), ignores QSOs with q.error,
+    returns total (+ points / multipliers), only uses the qtlf.* helpers of C.4.
+[ ] Each "qml" of "windows" matches a file provided; only QtQuick and QtQuick.Layouts;
+    no contest property outside C.5; the windows asked in part A are all there.
+[ ] The CSV file is called call_exchange.csv ("call_exchange" block); separator ";".
+[ ] "prefill" and "completion" chosen according to C.1b; "cqz" / "ituz" / "cont" -> country_file
+    present with the url https://www.country-files.com/cty/cty.dat.
+[ ] Script and windows also work without cty.dat (ctyLoaded false).
+[ ] The Cabrillo fields cover the categories of the rules.
+[ ] Displayed texts and code comments in English; explanations in the language of part A.
+[ ] The assumptions and the test set with the expected score are given.

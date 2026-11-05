@@ -1,0 +1,66 @@
+{
+    "name": "Silent Key Memorial Contest",
+    "short_name": "SKMC",
+    "description": "Remember our Silent Key ham friends. 1st November 0600-0859 UTC, CW only, 80m and 40m.",
+    "url": "https://skmc.hu/en/rules.html",
+
+    "schedule": {
+        "default_date": { "month": 11, "day": 1 },
+        "periods": [
+            { "day": 0, "start_utc": "06:00", "end_utc": "09:00" }
+        ]
+    },
+
+    "modes": ["CW"],
+
+    "bands": [
+        { "name": "80m", "low_khz": 3500, "high_khz": 3800, "segment": [3510, 3560], "cabrillo": "3500" },
+        { "name": "40m", "low_khz": 7000, "high_khz": 7200, "segment": [7000, 7040], "cabrillo": "7000" }
+    ],
+
+    "exchange": {
+        "rst": { "sent": "599", "received": "599" },
+        "sent": {
+            "label": "My SK Call",
+            "type": "fixed",
+            "prompt": "Silent Key callsign you remember in this contest (same for the whole contest)"
+        },
+        "received": {
+            "label": "SK Call",
+            "type": "callsign",
+            "required": true,
+            "prefill": "call_exchange",
+            "completion": true
+        }
+    },
+
+    "dupe": "band",
+
+    "call_exchange": {
+        "file": "call_exchange.csv",
+        "fields": ["call", "sk"],
+        "exchange_field": "sk"
+    },
+
+    "scoring": "scoring.js",
+
+    "windows": [
+        { "id": "score", "title": "Score",       "qml": "windows/Score.qml",       "area": "right", "visible": true },
+        { "id": "mults", "title": "Silent Keys", "qml": "windows/Multipliers.qml", "area": "right", "visible": true }
+    ],
+
+    "cabrillo": {
+        "contest": "SKMC",
+        "fields": [
+            { "tag": "CATEGORY-OPERATOR", "label": "Operator", "values": ["SINGLE-OP", "MULTI-OP"] },
+            { "tag": "CATEGORY-POWER",    "label": "Power (LOW = max 100 W)", "values": ["LOW", "HIGH"] },
+            { "tag": "OPERATORS",         "label": "Operators (multi-op)" }
+        ],
+        "header": {
+            "CATEGORY-MODE": "CW",
+            "CATEGORY-BAND": "ALL",
+            "CATEGORY-TRANSMITTER": "ONE"
+        },
+        "qso_template": "{freq:>5} {mode:2} {date} {time} {mycall:13} {rst_s:3} {exch_s:10} {call:13} {rst_r:3} {exch_r:10}"
+    }
+}

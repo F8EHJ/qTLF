@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=qTLF
+GenericName=Contest logger
+Comment=User-customizable contest logging software
+Exec=qtlf
+Icon=qtlf
+Terminal=false
+Categories=Network;HamRadio;Qt;
+Keywords=ham;radio;contest;log;cw;
+StartupWMClass=qtlf

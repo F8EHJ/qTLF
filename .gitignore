@@ -1,0 +1,24 @@
+# build folders (Linux build/, Windows build-win/, Qt Creator build-*)
+build/
+build-*/
+/out/
+
+# IDE / editor files
+*.user
+*.user.*
+CMakeLists.txt.user*
+.vscode/
+.idea/
+*~
+*.swp
+
+# generated or downloaded files
+*.qm
+*.zip
+*.exe
+*.dll
+cty.dat
+qtlf.sqlite
+
+# old test tool, not part of the repository
+/tools/udpmon/

@@ -1,0 +1,74 @@
+{
+    "name": "Rencontres UFT",
+    "short_name": "RENCONTRES-UFT",
+    "description": "Union Française des Télégraphistes — CW. Saturday 0500-0800 and 1500-1800 UTC, Sunday 0700-1000 UTC. Create the contest with the date of the SATURDAY.",
+
+    "schedule": {
+        "periods": [
+            { "day": 0, "start_utc": "05:00", "end_utc": "08:00" },
+            { "day": 0, "start_utc": "15:00", "end_utc": "18:00" },
+            { "day": 1, "start_utc": "07:00", "end_utc": "10:00" }
+        ]
+    },
+
+    "modes": ["CW"],
+
+    "bands": [
+        { "name": "80m", "low_khz": 3500,  "high_khz": 3800,  "segment": [3520, 3560],   "cabrillo": "3500" },
+        { "name": "40m", "low_khz": 7000,  "high_khz": 7200,  "segment": [7013, 7035],   "cabrillo": "7000" },
+        { "name": "20m", "low_khz": 14000, "high_khz": 14350, "segment": [14030, 14060], "cabrillo": "14000" },
+        { "name": "15m", "low_khz": 21000, "high_khz": 21450, "segment": [21030, 21060], "cabrillo": "21000" },
+        { "name": "10m", "low_khz": 28000, "high_khz": 29700, "segment": [28030, 28060], "cabrillo": "28000" }
+    ],
+
+    "exchange": {
+        "rst": { "sent": "599", "received": "599" },
+        "sent": {
+            "label": "My UFT Nr",
+            "type": "fixed",
+            "prompt": "Your UFT member number, or NM if you are not a member"
+        },
+        "received": {
+            "label": "UFT Nr",
+            "type": "text",
+            "required": true,
+            "pattern": "[0-9]+|NM",
+            "prefill": "call_exchange",
+            "completion": false
+        }
+    },
+
+    "dupe": "band",
+
+    "call_exchange": {
+        "file": "UFT_mini_2021.csv",
+        "fields": ["call", "nr", "name", "type"],
+        "exchange_field": "nr"
+    },
+
+    "country_file": {
+        "file": "cty.dat",
+        "url": "https://www.country-files.com/cty/cty.dat"
+    },
+    "remote_update": "on_open",
+
+    "scoring": "scoring.js",
+
+    "windows": [
+        { "id": "score",   "title": "UFT score",    "qml": "windows/Score.qml",   "area": "right", "visible": true },
+        { "id": "station", "title": "Station info", "qml": "windows/Station.qml", "area": "right", "visible": true }
+    ],
+
+    "cabrillo": {
+        "contest": "RENCONTRES-UFT",
+        "fields": [
+            { "tag": "CATEGORY-OPERATOR",    "label": "Operator",    "values": ["SINGLE-OP", "MULTI-OP"] },
+            { "tag": "CATEGORY-POWER",       "label": "Power",       "values": ["HIGH", "LOW", "QRP"] },
+            { "tag": "CATEGORY-TRANSMITTER", "label": "Transmitter", "values": ["ONE", "TWO", "LIMITED", "UNLIMITED", "SWL"] },
+            { "tag": "CLUB",                 "label": "Club",        "values": ["UFT", "NM"] },
+            { "tag": "OPERATORS",            "label": "Operators (multi-op)" }
+        ],
+        "header": { "CATEGORY-MODE": "CW" },
+        "qso_template": "{freq:>5} {mode:2} {date} {time} {mycall:13} {rst_s:3} {exch_s:6} {call:13} {rst_r:3} {exch_r:6}"
+    }
+}

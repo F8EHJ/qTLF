@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/qtlf-16.png</file>
+        <file>icons/qtlf-24.png</file>
+        <file>icons/qtlf-32.png</file>
+        <file>icons/qtlf-48.png</file>
+        <file>icons/qtlf-64.png</file>
+        <file>icons/qtlf-128.png</file>
+        <file>icons/qtlf-256.png</file>
+        <file>icons/qtlf-512.png</file>
+    </qresource>
+</RCC>

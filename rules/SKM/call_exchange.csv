@@ -1,0 +1,9 @@
+# SKMC call_exchange: one station per line, CSV separator ";", columns call;sk
+#   call = station worked, sk = the Silent Key call it sends (the exchange).
+# qTLF uses it for: the Call drop-down list (column call), the SK Call drop-down list
+# (column sk), and TAB pre-fills "SK Call" from it (after the calls already in the log).
+# Lines starting with # are ignored. Examples given in the SKMC rules (fictitious stations):
+# F1XYZ;HA6NA
+# DL1ABC;YT7MM
+# OK2ZZ;DJ7AW
+call;sk

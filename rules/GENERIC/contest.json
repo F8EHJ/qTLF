@@ -1,0 +1,48 @@
+{
+    "name": "Generic serial-number contest (template)",
+    "short_name": "GENERIC",
+    "description": "Template: 24 h (12:00 to 12:00 UTC), RST + serial number, 1 point per QSO, no multipliers. Copy this folder to start your own contest.",
+
+    "schedule": {
+        "periods": [
+            { "day": 0, "start_utc": "12:00", "end_utc": "12:00" }
+        ]
+    },
+
+    "modes": ["CW", "SSB"],
+
+    "bands": [
+        { "name": "160m", "low_khz": 1810,  "high_khz": 2000 },
+        { "name": "80m",  "low_khz": 3500,  "high_khz": 3800 },
+        { "name": "40m",  "low_khz": 7000,  "high_khz": 7200 },
+        { "name": "20m",  "low_khz": 14000, "high_khz": 14350 },
+        { "name": "15m",  "low_khz": 21000, "high_khz": 21450 },
+        { "name": "10m",  "low_khz": 28000, "high_khz": 29700 }
+    ],
+
+    "exchange": {
+        "rst": { "sent": "599", "received": "599" },
+        "sent":     { "label": "Nr Sent", "type": "serial", "serial_start": 1, "serial_digits": 3 },
+        "received": { "label": "Nr Rcvd", "type": "number", "required": true, "prefill": "none" }
+    },
+
+    "dupe": "band_mode",
+
+    "band_change": { "min_minutes": 0 },
+
+    "scoring": "scoring.js",
+
+    "windows": [
+        { "id": "rate", "title": "Rate", "qml": "windows/Rate.qml", "area": "right" }
+    ],
+
+    "cabrillo": {
+        "contest": "GENERIC",
+        "fields": [
+            { "tag": "CATEGORY-OPERATOR", "label": "Operator", "values": ["SINGLE-OP", "MULTI-OP"] },
+            { "tag": "CATEGORY-POWER",    "label": "Power",    "values": ["HIGH", "LOW", "QRP"] },
+            { "tag": "CATEGORY-MODE",     "label": "Mode",     "values": ["CW", "SSB", "MIXED"] }
+        ],
+        "header": { "CATEGORY-BAND": "ALL" }
+    }
+}
